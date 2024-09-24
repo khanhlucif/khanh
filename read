@@ -1,0 +1,36 @@
+import java.io.IOException;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+
+public class read {
+
+	public static void main(String[] args) {
+		try{
+			readFileFromHDFS();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void readFileFromHDFS() throws IOException {
+		Configuration configuration = new Configuration();
+		configuration.set("fs.defaultFS","hdfs://10.0.2.15");
+		
+		FileSystem fileSystem = FileSystem.get(configuration);
+		
+		String fileName = "read_write_hdfs_example.txt";
+		Path hdfsReadPath = new Path("BigdataHUMG/HDFS2121050122/" + fileName);
+		
+		FSDataInputStream inputStream = fileSystem.open(hdfsReadPath);
+		
+		String out = IOUtils.toString(inputStream, "UTF-8");
+		System.out.println(out);
+		
+		inputStream.close();
+		fileSystem.close();
+	}
+}
