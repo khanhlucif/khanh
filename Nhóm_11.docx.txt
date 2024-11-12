@@ -1,0 +1,110 @@
+Nhóm 01:
+
+Bước 1: Chuẩn bị Tập Dữ Liệu
+Sử dụng tập dữ liệu Coffee Sales “index.csv”
+Bước 2: Tạo Database và Bảng trong Hive
+Tạo Database: Tạo database với tên coffee_sales để quản lý dữ liệu.
+CREATE DATABASE coffee_sales;
+
+Tạo bảng cho tập dữ liệu:
+CREATE TABLE coffee_sales (
+    order_id STRING,
+    order_date DATE,
+    product_id STRING,
+    quantity INT,
+    customer_id STRING,
+    sales DECIMAL(10,2)
+) 
+ROW FORMAT DELIMITED 
+FIELDS TERMINATED BY ',' 
+STORED AS TEXTFILE;
+
+Bước 3: Nhập Dữ Liệu vào Hive
+Tải dữ liệu index.csv vào các bảng coffee_sales trong Hive:
+LOAD DATA LOCAL INPATH '/home/cloudera/index.csv' INTO TABLE coffee_sales;
+
+Bước 4: Thực hiện các Truy vấn
+Phân tích doanh số theo thời gian:
+SELECT 
+    YEAR(order_date) as year,
+    MONTH(order_date) as month,
+    SUM(sales) as total_sales,
+    COUNT(DISTINCT customer_id) as unique_customers,
+    SUM(sales)/COUNT(DISTINCT customer_id) as avg_sales_per_customer
+FROM coffee_sales
+GROUP BY YEAR(order_date), MONTH(order_date)
+ORDER BY year, month;
+
+
+Ý nghĩa: 
+Theo dõi doanh số theo từng tháng, năm
+Biết được số lượng khách hàng active trong mỗi tháng
+Tính được mức chi tiêu trung bình của mỗi khách hàng
+Phân tích thời điểm bán hàng trong ngày:
+SELECT 
+    CASE
+        WHEN HOUR(order_date) BETWEEN 6 AND 10 THEN 'Buổi sáng'
+        WHEN HOUR(order_date) BETWEEN 11 AND 14 THEN 'Buổi trưa'
+        WHEN HOUR(order_date) BETWEEN 15 AND 18 THEN 'Buổi chiều'
+        ELSE 'Buổi tối'
+    END as time_of_day,
+    COUNT(*) as number_of_orders,
+    ROUND(AVG(quantity), 2) as avg_items_per_order,
+    ROUND(SUM(sales), 2) as total_sales
+FROM coffee_sales
+GROUP BY CASE
+    WHEN HOUR(order_date) BETWEEN 6 AND 10 THEN 'Buổi sáng'
+    WHEN HOUR(order_date) BETWEEN 11 AND 14 THEN 'Buổi trưa'
+    WHEN HOUR(order_date) BETWEEN 15 AND 18 THEN 'Buổi chiều'
+    ELSE 'Buổi tối'
+END
+ORDER BY number_of_orders DESC;
+
+
+Ý nghĩa:
+Xác định khung giờ bán hàng tốt nhất
+Biết được thói quen mua sắm của khách hàng theo giờ
+Hỗ trợ việc sắp xếp nhân viên theo ca làm việc
+Phân tích xu hướng sản phẩm:
+SELECT 
+    product_id,
+    COUNT(*) as times_ordered,
+    SUM(quantity) as total_quantity_sold,
+    SUM(sales) as total_revenue,
+    AVG(sales/quantity) as avg_price_per_unit
+FROM coffee_sales
+GROUP BY product_id
+HAVING COUNT(*) > 10
+ORDER BY total_revenue DESC;
+
+
+Ý nghĩa:
+Xác định sản phẩm bán chạy nhất
+Phân tích giá bán trung bình của từng sản phẩm
+Đánh giá hiệu suất bán hàng của từng sản phẩm
+Phân tích mùa vụ:
+SELECT 
+    CASE 
+        WHEN MONTH(order_date) IN (12,1,2) THEN 'Mùa Đông'
+        WHEN MONTH(order_date) IN (3,4,5) THEN 'Mùa Xuân'
+        WHEN MONTH(order_date) IN (6,7,8) THEN 'Mùa Hè'
+        ELSE 'Mùa Thu'
+    END as season,
+    COUNT(*) as total_orders,
+    SUM(sales) as total_sales,
+    AVG(quantity) as avg_quantity_per_order
+FROM coffee_sales
+GROUP BY CASE 
+    WHEN MONTH(order_date) IN (12,1,2) THEN 'Mùa Đông'
+    WHEN MONTH(order_date) IN (3,4,5) THEN 'Mùa Xuân'
+    WHEN MONTH(order_date) IN (6,7,8) THEN 'Mùa Hè'
+    ELSE 'Mùa Thu'
+END;
+
+
+Ý nghĩa:
+Phân tích tính thời vụ trong việc bán hàng
+Xác định mùa bán hàng tốt nhất
+Hiểu được hành vi mua hàng theo mùa của khách hàng
+
+
